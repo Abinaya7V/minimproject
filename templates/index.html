@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Email Phishing Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Inline CSS for simplicity as requested */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        textarea { height: 150px; resize: vertical; }
+        button[type="submit"] { background-color: #3498db; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
+        button[type="submit"]:hover { background-color: #2980b9; }
+        .samples { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .sample-btn { background-color: #ecf0f1; border: 1px solid #bdc3c7; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .sample-btn:hover { background-color: #e0e6ed; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI-Enabled Email Phishing Detection System</h1>
+        <p class="subtitle">End-to-End NLP & ML Pipeline Detection</p>
+        
+        <div class="samples">
+            <button class="sample-btn" type="button" onclick="fillSample(1)">Try Sample Phishing 1</button>
+            <button class="sample-btn" type="button" onclick="fillSample(2)">Try Sample Phishing 2</button>
+            <button class="sample-btn" type="button" onclick="fillSample(3)">Try Sample Legitimate</button>
+        </div>
+
+        <form action="/analyze" method="POST">
+            <div class="form-group">
+                <label for="sender_email">Sender Email</label>
+                <input type="text" id="sender_email" name="sender_email" placeholder="e.g. support@paypal.com">
+            </div>
+            <div class="form-group">
+                <label for="subject">Subject</label>
+                <input type="text" id="subject" name="subject" placeholder="Email subject">
+            </div>
+            <div class="form-group">
+                <label for="email_text">Email Body Text</label>
+                <textarea id="email_text" name="email_text" required placeholder="Paste the raw email text here..."></textarea>
+            </div>
+            <button type="submit">Analyze Email</button>
+        </form>
+    </div>
+
+    <script>
+        function fillSample(id) {
+            if(id === 1) {
+                document.getElementById('sender_email').value = '"PayPal Support" <admin@scammer.com>';
+                document.getElementById('subject').value = 'URGENT: Action Required on your account';
+                document.getElementById('email_text').value = 'URGENT: Verify your account immediately! We noticed suspicious activity. Please login here: http://192.168.1.1/login';
+            } else if(id === 2) {
+                document.getElementById('sender_email').value = 'security@netflix-update-billing.com';
+                document.getElementById('subject').value = 'Final Notice: Update your billing info';
+                document.getElementById('email_text').value = 'Your Netflix account is restricted. Please update your billing information or your account will be suspended. Click here to update: https://bit.ly/12345';
+            } else if(id === 3) {
+                document.getElementById('sender_email').value = 'colleague@company.com';
+                document.getElementById('subject').value = 'Lunch tomorrow?';
+                document.getElementById('email_text').value = 'Hi team, let\'s have lunch tomorrow at 12. Attached is the agenda for our meeting later in the day. Thanks!';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result - AI Phishing Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+        .error { color: white; background-color: #e74c3c; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .badge { display: block; width: 100%; text-align: center; padding: 20px; font-size: 28px; font-weight: bold; border-radius: 8px; color: white; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;}
+        .phishing { background-color: #e74c3c; }
+        .legitimate { background-color: #2ecc71; }
+        .stats { margin-bottom: 20px; padding: 20px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #eee; }
+        .progress-bar { width: 100%; background-color: #ddd; border-radius: 13px; padding: 3px; }
+        .progress { height: 20px; border-radius: 10px; text-align: right; color: white; line-height: 20px; font-size: 12px; font-weight: bold; padding-right: 10px; transition: width 0.5s;}
+        .progress.high { background-color: #e74c3c; }
+        .progress.medium { background-color: #f39c12; }
+        .progress.low { background-color: #2ecc71; }
+        ul { margin-top: 10px; padding-left: 20px; }
+        li { margin-bottom: 5px; }
+        .actions { background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ffeeba; }
+        .btn-back { display: block; text-align: center; background-color: #95a5a6; color: white; text-decoration: none; padding: 12px 20px; border-radius: 4px; font-size: 16px; margin-top: 20px;}
+        .btn-back:hover { background-color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Analysis Result</h1>
+        
+        {% if error %}
+            <div class="error">
+                <strong>Error:</strong> {{ error }}
+                <p>Did you forget to train the model? Please run <code>python train_model.py</code> to generate the required .pkl files.</p>
+            </div>
+            <a href="/" class="btn-back">Go Back</a>
+        {% else %}
+            
+            <div class="badge {% if result.prediction == 'Phishing' %}phishing{% else %}legitimate{% endif %}">
+                {{ result.prediction }}
+            </div>
+            
+            <div class="stats">
+                <h3>Confidence Score</h3>
+                <div class="progress-bar">
+                    {% set pct = (result.confidence * 100) | round | int %}
+                    <div class="progress {% if result.prediction == 'Phishing' and result.risk_level == 'High' %}high{% elif result.prediction == 'Phishing' and result.risk_level == 'Medium' %}medium{% else %}low{% endif %}" style="width: {{ pct }}%">{{ pct }}%</div>
+                </div>
+                
+                <p><strong>Risk Level:</strong> 
+                    {% if result.risk_level == 'High' %}
+                        <span style="color: #e74c3c; font-weight: bold;">⚠️ HIGH</span>
+                    {% elif result.risk_level == 'Medium' %}
+                        <span style="color: #f39c12; font-weight: bold;">⚠️ MEDIUM</span>
+                    {% else %}
+                        <span style="color: #2ecc71; font-weight: bold;">✅ LOW</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            {% if result.prediction == 'Phishing' %}
+            <div class="actions">
+                <h3>Recommended Actions:</h3>
+                <ul>
+                    <li>Do not click any links or download attachments.</li>
+                    <li>Verify the sender's identity through a secondary channel (e.g., phone call).</li>
+                    <li>Report this email to your IT security team.</li>
+                    <li>Delete the email permanently.</li>
+                </ul>
+            </div>
+            {% endif %}
+            
+            <div class="stats">
+                <h3>Why this was flagged:</h3>
+                {% if result.reasons %}
+                    <ul>
+                        {% for reason in result.reasons %}
+                            <li>{{ reason }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>The ML model evaluated the textual patterns and predicted this classification based on historical data.</p>
+                {% endif %}
+            </div>
+
+            <a href="/" class="btn-back">Analyze Another Email</a>
+        {% endif %}
+    </div>
+</body>
+</html>
