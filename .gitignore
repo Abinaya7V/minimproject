@@ -2,3 +2,7 @@ venv/
 __pycache__/
 *.pyc
 .env
+data/
+extension/node_modules/
+benchmark_*.txt
+benchmark_*.json

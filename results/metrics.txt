@@ -1,0 +1,68 @@
+======================================================================
+AI-POWERED PHISHING DETECTION: MODEL EVALUATION REPORT
+======================================================================
+
+Dataset Path:             data/CEAS_08.csv
+Total Valid Samples:      39,145
+Phishing Samples (1):     21,833 (55.77%)
+Legitimate Samples (0):   17,312 (44.23%)
+Train / Test Split:       80% Train (31,316), 20% Holdout Test (7,829)
+Vocabulary Features:      10,000 terms
+
+----------------------------------------------------------------------
+TEST SET PERFORMANCE COMPARISON (Phishing Class = 1)
+----------------------------------------------------------------------
+Metric               | Logistic Regression    | Random Forest       
+----------------------------------------------------------------------
+Accuracy             | 0.9964                 | 0.9875              
+Precision            | 0.9968                 | 0.9826              
+Recall               | 0.9968                 | 0.9952              
+F1-Score             | 0.9968                 | 0.9889              
+5-Fold CV Mean F1    | 0.9943                 | N/A (Comparison Only)
+5-Fold CV Std        | 0.0007                 | N/A                 
+----------------------------------------------------------------------
+
+CONFUSION MATRIX - LOGISTIC REGRESSION (DEPLOYED):
+  [TN:  3448  FP:    14]
+  [FN:    14  TP:  4353]
+
+CONFUSION MATRIX - RANDOM FOREST (COMPARISON):
+  [TN:  3385  FP:    77]
+  [FN:    21  TP:  4346]
+
+TOP 15 PHISHING INDICATOR WORDS (+ Logistic Regression Weight):
+   1. love                      (+5.544)
+   2. watch                     (+4.331)
+   3. urltoken                  (+4.319)
+   4. life                      (+3.567)
+   5. men                       (+3.437)
+   6. replica                   (+3.103)
+   7. health                    (+2.957)
+   8. girl                      (+2.879)
+   9. ecard                     (+2.698)
+  10. offer                     (+2.390)
+  11. medication                (+2.380)
+  12. woman                     (+2.369)
+  13. inch                      (+2.321)
+  14. pill                      (+2.319)
+  15. dimension                 (+2.257)
+
+TOP 15 LEGITIMATE INDICATOR WORDS (- Logistic Regression Weight):
+   1. wrote                     (-8.301)
+   2. emailtoken                (-5.788)
+   3. opensuse                  (-5.727)
+   4. ierant                    (-4.909)
+   5. thanks                    (-4.518)
+   6. pm                        (-4.046)
+   7. fork                      (-3.722)
+   8. perl                      (-3.695)
+   9. list                      (-3.616)
+  10. use                       (-3.592)
+  11. ilug                      (-3.513)
+  12. python                    (-3.361)
+  13. mailing                   (-3.270)
+  14. im                        (-3.269)
+  15. uai                       (-3.266)
+
+DEPLOYMENT NOTE: Logistic Regression is deployed to production in 'phishing_model.pkl'
+to preserve linear log-odds feature attribution for Chrome Extension explainability.

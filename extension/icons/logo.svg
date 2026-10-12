@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="innerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#1e40af" stop-opacity="0.1" />
+    </linearGradient>
+    <filter id="shieldShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  <!-- Outer Shield Outline -->
+  <path d="M 64,8 
+           C 88,14 104,18 114,24 
+           C 114,64 104,98 64,120 
+           C 24,98 14,64 14,24 
+           C 24,18 40,14 64,8 Z" 
+        fill="url(#shieldGrad)" 
+        filter="url(#shieldShadow)" />
+  <!-- Inner Shield Glow / Bevel -->
+  <path d="M 64,18 
+           C 84,23 96,26 104,31 
+           C 104,65 96,93 64,111 
+           C 32,93 24,65 24,31 
+           C 32,26 44,23 64,18 Z" 
+        fill="url(#innerGrad)" />
+  <!-- Crisp Center Security Checkmark -->
+  <path d="M 40,64 L 56,80 L 88,48" 
+        fill="none" 
+        stroke="#ffffff" 
+        stroke-width="11" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+</svg>

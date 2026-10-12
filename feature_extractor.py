@@ -1,3 +1,13 @@
+"""
+Feature Extractor Module
+-------------------------
+Part of: AI-Powered Email Phishing Detection Chrome Extension
+Module: Feature Extraction (Heuristic & Metadata Analysis)
+
+Extracts domain mismatch, URL suspiciousness, keyword counts,
+and structural indicators from email headers and body.
+"""
+
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
@@ -37,9 +47,16 @@ KNOWN_BRANDS = {
     "ups": "ups.com"
 }
 
-SHORTENERS = [
+SHORTENERS = {
     "bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", "buff.ly", "adf.ly", "shorte.st"
-]
+}
+
+# Pre-compiled regex patterns for speed
+_RE_TEXT_URLS = re.compile(r'(?:https?://|www\.)[^\s<>"]+')
+_RE_IP_ADDRESS = re.compile(r'^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$')
+_RE_WORD_CAPS = re.compile(r'\b[A-Z]{4,}\b')
+_ATTACHMENT_PHRASES = ("attachment", "attached file", "attached document", "find attached")
+
 
 def extract_features(email_text, sender_email=None, subject=None):
     """
@@ -65,25 +82,25 @@ def extract_features(email_text, sender_email=None, subject=None):
         "all_caps_word_count": 0
     }
     
+    if not email_text:
+        return features
+
     # 1. URL extraction & analysis
-    soup = BeautifulSoup(email_text, 'html.parser')
-    links = soup.find_all('a')
-    
-    # Find URLs in plain text as well
-    url_pattern = re.compile(r'(?:https?://|www\.)[^\s<>"]+')
-    text_urls = url_pattern.findall(email_text)
-    
     total_urls = []
     
-    for a in links:
-        href = a.get('href', '')
-        if href:
-            total_urls.append(href)
-            # Check mismatched display text (e.g. href is scam.com but display is paypal.com)
-            display_text = a.text.strip()
-            if display_text.startswith('http') and display_text != href:
-                features["suspicious_url_flag"] = True
-                
+    if "<" in email_text and ">" in email_text:
+        soup = BeautifulSoup(email_text, 'html.parser')
+        links = soup.find_all('a')
+        for a in links:
+            href = a.get('href', '')
+            if href:
+                total_urls.append(href)
+                display_text = a.text.strip()
+                if display_text.startswith('http') and display_text != href:
+                    features["suspicious_url_flag"] = True
+
+    # Find plain text URLs
+    text_urls = _RE_TEXT_URLS.findall(email_text)
     for url in text_urls:
         if url not in total_urls:
             total_urls.append(url)
@@ -91,19 +108,18 @@ def extract_features(email_text, sender_email=None, subject=None):
     features["num_urls"] = len(total_urls)
     
     for url in total_urls:
-        # Normalize protocol if missing for urlparse
         if not url.startswith('http'):
             url = 'http://' + url
             
         parsed = urlparse(url)
         netloc = parsed.netloc.lower()
         
-        # Check shorteners
-        if any(shortener in netloc for shortener in SHORTENERS):
+        # Fast set membership lookup for shorteners
+        if netloc in SHORTENERS or any(shortener in netloc for shortener in SHORTENERS):
             features["suspicious_url_flag"] = True
             
-        # Check IP address instead of domain (IPv4 format)
-        if re.match(r'^\d{1,3}(\.\d{1,3}){3}(:\d+)?$', netloc):
+        # Check IP address format
+        if _RE_IP_ADDRESS.match(netloc):
             features["suspicious_url_flag"] = True
             
     # 2. Sender domain & brand mismatch
@@ -111,15 +127,14 @@ def extract_features(email_text, sender_email=None, subject=None):
         name, address = parseaddr(sender_email)
         if address:
             ext = tldextract.extract(address)
-            # Reconstruct domain.suffix
             domain = f"{ext.domain}.{ext.suffix}" if ext.suffix else ext.domain
             features["sender_domain"] = domain
             
-            # Check for brand mismatch
             name_lower = name.lower()
             for brand, true_domain in KNOWN_BRANDS.items():
                 if brand in name_lower and domain != true_domain:
                     features["sender_domain_mismatch"] = True
+                    break
                     
     # 3. Keyword analysis (case insensitive)
     text_lower = email_text.lower()
@@ -127,24 +142,22 @@ def extract_features(email_text, sender_email=None, subject=None):
         text_lower += " " + subject.lower()
         
     for kw in URGENT_KEYWORDS:
-        features["urgent_keyword_count"] += text_lower.count(kw)
+        if kw in text_lower:
+            features["urgent_keyword_count"] += text_lower.count(kw)
         
     for kw in FINANCIAL_KEYWORDS:
-        features["financial_keyword_count"] += text_lower.count(kw)
+        if kw in text_lower:
+            features["financial_keyword_count"] += text_lower.count(kw)
         
     # 4. Attachment mention
-    attachment_phrases = ["attachment", "attached file", "attached document", "find attached"]
-    if any(phrase in text_lower for phrase in attachment_phrases):
+    if any(phrase in text_lower for phrase in _ATTACHMENT_PHRASES):
         features["has_attachment_mention"] = True
         
     # 5. Exclamation count
     features["exclamation_count"] = email_text.count("!")
     
-    # 6. All caps word count (exclude acronyms <= 3 chars like OTP)
-    # Match words composed only of alphabet letters
-    words = re.findall(r'\b[A-Za-z]+\b', email_text)
-    caps_words = [w for w in words if w.isupper() and len(w) > 3]
-    features["all_caps_word_count"] = len(caps_words)
+    # 6. All caps word count (> 3 chars)
+    features["all_caps_word_count"] = len(_RE_WORD_CAPS.findall(email_text))
     
     return features
 
@@ -161,10 +174,6 @@ def feature_vector_summary(features_dict):
         
     if features_dict.get("suspicious_url_flag"):
         reasons.append("Suspicious URL format detected (URL shortener, IP address, or hidden link)")
-        
-    if features_dict.get("sender_domain"):
-        # We don't necessarily flag every domain, but we can list it for info.
-        pass
         
     if features_dict.get("sender_domain_mismatch"):
         reasons.append("Sender domain does not match claimed brand display name")

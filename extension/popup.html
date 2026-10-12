@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Phishing Detector</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="header">
+    <div class="brand">
+      <img src="icons/icon48.png" alt="PhishGuard Logo" class="brand-logo" width="22" height="22">
+      <h1>PhishGuard AI</h1>
+    </div>
+    <span class="status-indicator" id="status-pill" title="Backend Status">Checking...</span>
+  </div>
+
+  <!-- Detected Email Metadata Box -->
+  <div class="metadata-card" id="metadata-card">
+    <div class="meta-row">
+      <span class="meta-label">Subject:</span>
+      <span class="meta-val" id="meta-subject">Detecting...</span>
+    </div>
+    <div class="meta-row">
+      <span class="meta-label">Sender:</span>
+      <span class="meta-val" id="meta-sender">Detecting...</span>
+    </div>
+    <div class="meta-row" id="urls-count-row">
+      <span class="meta-label">Links found:</span>
+      <span class="meta-val" id="meta-urls-count">0</span>
+    </div>
+  </div>
+
+  <!-- Action Section -->
+  <div class="action-section">
+    <button id="analyze-btn" class="btn primary-btn">
+      <span class="btn-text">Analyze This Email</span>
+      <span class="btn-spinner hidden" id="spinner"></span>
+    </button>
+  </div>
+
+  <!-- Error Alert Container -->
+  <div id="error-card" class="error-card hidden">
+    <div class="error-header">
+      <span class="error-icon">⚠️</span>
+      <span class="error-title">Notice</span>
+    </div>
+    <div class="error-body" id="error-message"></div>
+  </div>
+
+  <!-- Analysis Results Card -->
+  <div id="results-card" class="results-card hidden">
+    <!-- Result Header: Badge & Label -->
+    <div class="result-header">
+      <div class="label-group">
+        <span class="result-label" id="result-label">Phishing</span>
+        <span class="risk-badge" id="risk-badge">High Risk</span>
+      </div>
+      <div class="score-group">
+        <span class="confidence-num" id="confidence-num">0%</span>
+        <span class="confidence-caption">Confidence</span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="meter-bar">
+      <div class="meter-fill" id="meter-fill" style="width: 0%;"></div>
+    </div>
+
+    <!-- Contributing Reasons -->
+    <div class="section-block">
+      <div class="section-title">Why this was flagged:</div>
+      <ul class="reason-list" id="reasons-list"></ul>
+    </div>
+
+    <!-- Recommended Actions -->
+    <div class="section-block">
+      <div class="section-title">Recommended Safety Actions:</div>
+      <ul class="rec-list" id="recommendations-list"></ul>
+    </div>
+  </div>
+
+  <!-- Privacy Footer -->
+  <footer class="footer">
+    <span>Email text is sent only to your local server and is not stored for any other purposes.</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

@@ -24,6 +24,7 @@ from predict import (
     calculate_risk_level
 )
 from feature_extractor import extract_features, feature_vector_summary
+from preprocessor import _lemmatizer, _cached_lemmatize
 
 # Initialize Flask Application
 app = Flask(__name__)
@@ -46,13 +47,15 @@ CORS(app, resources={
 })
 
 # -------------------------------------------------------------------------
-# Startup Model Pre-loading:
-# Load ML model and vectorizer ONCE into memory at server startup
-# rather than repeatedly reloading .pkl files from disk on every request.
+# Startup Model & Resource Pre-loading:
+# Load ML model, vectorizer, and pre-warm NLP resources ONCE into memory
+# at server startup so subsequent requests respond in milliseconds.
 # -------------------------------------------------------------------------
 try:
     load_model_artifacts()
-    print("[SUCCESS] Machine learning model and vectorizer pre-loaded at startup.")
+    # Trigger a lightweight warm-up lookup
+    _cached_lemmatize("account")
+    print("[SUCCESS] Machine learning model and NLP resources pre-loaded at startup.")
 except Exception as e:
     print(f"[WARNING] Model pre-load deferred (run train_model.py if files are missing): {e}")
 
@@ -170,17 +173,11 @@ def api_analyze():
         # Combine subject and body for classification if subject is present
         analysis_text = f"{subject}\n\n{body}".strip() if subject.strip() else body
 
-        # 3. Perform prediction using pre-loaded model
+        # 3. Perform prediction (predict_email internally computes X and extracts TF-IDF reasons)
         prediction_result = predict_email(analysis_text)
+        tfidf_reasons = prediction_result.get("reasons", [])
 
-        # 4. Extract TF-IDF explainability reasons (via modular helper)
-        tfidf_reasons = get_top_contributing_words(
-            email_text=analysis_text,
-            label=prediction_result["label"],
-            top_n=3
-        )
-
-        # 5. Extract additional feature heuristics (sender mismatch, URLs, etc.)
+        # 4. Extract additional feature heuristics (sender mismatch, URLs, etc.)
         heuristic_features = extract_features(body, sender_email=sender, subject=subject)
         heuristic_reasons = feature_vector_summary(heuristic_features)
 
@@ -192,11 +189,12 @@ def api_analyze():
             else:
                 merged_reasons = ["No suspicious indicators detected in the message."]
 
-        # 6. Format API response matching project specifications
+        # 5. Format API response matching project specifications
         # Privacy: We return only analysis metrics; email content is NEVER logged or saved.
         response_payload = {
             "label": prediction_result["label"],
             "confidence": prediction_result["confidence_pct"],  # float between 0 and 100
+            "phishing_probability": prediction_result["phishing_probability"],  # float between 0 and 100
             "risk_level": prediction_result["risk_level"],
             "reasons": merged_reasons,
             "recommendations": prediction_result["recommendations"]

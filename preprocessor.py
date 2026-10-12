@@ -11,18 +11,23 @@ extraction / ML classification.
 Pipeline:
   raw_text -> strip HTML -> lowercase -> remove URLs/emails/numbers/punct
            -> tokenize -> remove stopwords -> lemmatize -> clean_tokens
-
 """
 
 import re
 import string
+from functools import lru_cache
 from bs4 import BeautifulSoup
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
 
-# Initialize once (avoids reloading on every call)
+# Initialize lemmatizer and pre-warm WordNet so lookups don't block during requests
 _lemmatizer = WordNetLemmatizer()
+try:
+    wordnet.ensure_loaded()
+except Exception:
+    pass
+
 _stop_words = set(stopwords.words('english'))
 
 # Keep a few words that matter a LOT for phishing detection even though
@@ -31,21 +36,39 @@ _stop_words = set(stopwords.words('english'))
 _KEEP_WORDS = {"now", "urgent", "immediately", "verify", "click", "account"}
 _stop_words = _stop_words - _KEEP_WORDS
 
+# Pre-compiled regex patterns for maximum execution speed
+_RE_WHITESPACE = re.compile(r"\s+")
+_RE_URL = re.compile(r"https?://\S+|www\.\S+")
+_RE_EMAIL = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
+_RE_DIGITS = re.compile(r"\d+")
+_PUNCT_TRANSLATE = str.maketrans("", "", string.punctuation)
+
+
+@lru_cache(maxsize=10000)
+def _cached_lemmatize(token: str) -> str:
+    """Caches lemmatized forms of common English words to eliminate redundant lookups."""
+    return _lemmatizer.lemmatize(token)
+
 
 def strip_html(text: str) -> str:
     """Remove HTML tags from email body (emails are often HTML-formatted)."""
     if not text:
         return ""
-    soup = BeautifulSoup(text, "html.parser")
-    raw = soup.get_text(separator=" ")
-    return re.sub(r"\s+", " ", raw).strip()
+    # Only invoke BeautifulSoup if HTML tags are actually present
+    if "<" in text and ">" in text:
+        soup = BeautifulSoup(text, "html.parser")
+        raw = soup.get_text(separator=" ")
+    else:
+        raw = text
+    return _RE_WHITESPACE.sub(" ", raw).strip()
 
 
 def normalize_text(text: str) -> str:
     """Lowercase and collapse whitespace."""
+    if not text:
+        return ""
     text = text.lower()
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
+    return _RE_WHITESPACE.sub(" ", text).strip()
 
 
 def remove_urls_and_emails(text: str, replace_with_tag: bool = True) -> str:
@@ -55,31 +78,33 @@ def remove_urls_and_emails(text: str, replace_with_tag: bool = True) -> str:
     a strong phishing signal that the Feature Extraction module will use
     later — so we tag it rather than erase the evidence.
     """
-    url_pattern = r"(https?://\S+|www\.\S+)"
-    email_pattern = r"\S+@\S+\.\S+"
-
+    if not text:
+        return ""
     if replace_with_tag:
-        text = re.sub(url_pattern, " URLTOKEN ", text)
-        text = re.sub(email_pattern, " EMAILTOKEN ", text)
+        text = _RE_URL.sub(" URLTOKEN ", text)
+        text = _RE_EMAIL.sub(" EMAILTOKEN ", text)
     else:
-        text = re.sub(url_pattern, " ", text)
-        text = re.sub(email_pattern, " ", text)
+        text = _RE_URL.sub(" ", text)
+        text = _RE_EMAIL.sub(" ", text)
     return text
 
 
 def remove_punctuation_and_numbers(text: str) -> str:
     """Strip punctuation and standalone numbers (keeps URLTOKEN/EMAILTOKEN intact)."""
-    text = re.sub(r"\d+", " ", text)
-    text = text.translate(str.maketrans("", "", string.punctuation))
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
+    if not text:
+        return ""
+    text = _RE_DIGITS.sub(" ", text)
+    text = text.translate(_PUNCT_TRANSLATE)
+    return _RE_WHITESPACE.sub(" ", text).strip()
 
 
 def tokenize_and_lemmatize(text: str) -> list:
     """Tokenize, drop stopwords, lemmatize each token to its base form."""
+    if not text:
+        return []
     tokens = word_tokenize(text)
     cleaned = [
-        _lemmatizer.lemmatize(tok)
+        _cached_lemmatize(tok)
         for tok in tokens
         if tok not in _stop_words and len(tok) > 1
     ]
