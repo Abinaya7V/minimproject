@@ -37,7 +37,11 @@ body {
 
 .brand-logo {
   display: block;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
+  overflow: visible;
+  border-radius: 0;
 }
 
 .brand h1 {

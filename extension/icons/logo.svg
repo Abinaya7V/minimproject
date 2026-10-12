@@ -1,37 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
+    <!-- Rich professional security gradient matching popup styles -->
     <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="50%" stop-color="#2563eb" />
       <stop offset="100%" stop-color="#1d4ed8" />
     </linearGradient>
-    <linearGradient id="innerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.35" />
-      <stop offset="100%" stop-color="#1e40af" stop-opacity="0.1" />
+    <linearGradient id="innerGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.0" />
     </linearGradient>
-    <filter id="shieldShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.25" />
-    </filter>
   </defs>
-  <!-- Outer Shield Outline -->
-  <path d="M 64,8 
-           C 88,14 104,18 114,24 
-           C 114,64 104,98 64,120 
-           C 24,98 14,64 14,24 
-           C 24,18 40,14 64,8 Z" 
-        fill="url(#shieldGrad)" 
-        filter="url(#shieldShadow)" />
-  <!-- Inner Shield Glow / Bevel -->
-  <path d="M 64,18 
-           C 84,23 96,26 104,31 
-           C 104,65 96,93 64,111 
-           C 32,93 24,65 24,31 
-           C 32,26 44,23 64,18 Z" 
-        fill="url(#innerGrad)" />
-  <!-- Crisp Center Security Checkmark -->
-  <path d="M 40,64 L 56,80 L 88,48" 
-        fill="none" 
-        stroke="#ffffff" 
-        stroke-width="11" 
-        stroke-linecap="round" 
+
+  <!-- Complete Classical Shield with ~8% Padding (Fits securely within [10, 10] to [118, 118]) -->
+  <path d="M 64,11
+           C 86,16 103,19 116,25
+           C 116,68 98,99 64,117
+           C 30,99 12,68 12,25
+           C 25,19 42,16 64,11 Z"
+        fill="url(#shieldGrad)"
+        stroke="#1e40af"
+        stroke-width="2.5"
+        stroke-linejoin="round" />
+
+  <!-- Inner Soft Bevel / Highlight -->
+  <path d="M 64,18
+           C 83,22 97,25 108,30
+           C 108,66 93,92 64,107
+           C 35,92 20,66 20,30
+           C 31,25 45,22 64,18 Z"
+        fill="url(#innerGlow)" />
+
+  <!-- Bold Clean Security Checkmark (Horizontally & Vertically Balanced) -->
+  <path d="M 41,63 L 57,79 L 89,47"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="11"
+        stroke-linecap="round"
         stroke-linejoin="round" />
 </svg>
